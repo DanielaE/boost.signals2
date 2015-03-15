@@ -86,7 +86,7 @@ void test_group_compare()
 int test_main(int, char* [])
 {
   using namespace std;
-  srand(time(0));
+  srand(static_cast<unsigned>(time(0)));
 
   std::vector<int> sortedValues;
 
