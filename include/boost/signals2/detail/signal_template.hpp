@@ -13,6 +13,11 @@
 
 // This file is included iteratively, and should not be protected from multiple inclusion
 
+#if BOOST_WORKAROUND(BOOST_MSVC, < 1900)
+#pragma warning(push)
+#pragma warning(disable: 4512)
+#endif
+
 #ifdef BOOST_NO_CXX11_VARIADIC_TEMPLATES
 #define BOOST_SIGNALS2_NUM_ARGS BOOST_PP_ITERATION()
 #else
@@ -435,8 +440,8 @@ namespace boost
         {
           BOOST_ASSERT(_shared_state.unique());
           typename connection_list_type::iterator it;
-          unsigned i;
-          for(it = begin, i = 0;
+          unsigned i = 0;
+          for(it = begin;
             it != _shared_state->connection_bodies().end() && (count == 0 || i < count);
             ++i)
           {
@@ -859,3 +864,7 @@ namespace boost
 
 #undef BOOST_SIGNALS2_NUM_ARGS
 #undef BOOST_SIGNALS2_SIGNAL_TEMPLATE_INSTANTIATION
+
+#if BOOST_WORKAROUND(BOOST_MSVC, < 1900)
+#pragma warning(pop)
+#endif

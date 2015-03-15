@@ -216,6 +216,9 @@ namespace boost
           return released_slot;
         }
       private:
+#if BOOST_WORKAROUND(BOOST_MSVC, < 1900)
+        connection_body & operator=(const connection_body &);
+#endif
         mutable boost::shared_ptr<SlotType> m_slot;
         const boost::shared_ptr<mutex_type> _mutex;
         GroupKey _group_key;
