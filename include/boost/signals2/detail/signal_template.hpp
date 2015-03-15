@@ -435,8 +435,8 @@ namespace boost
         {
           BOOST_ASSERT(_shared_state.unique());
           typename connection_list_type::iterator it;
-          unsigned i;
-          for(it = begin, i = 0;
+          unsigned i = 0;
+          for(it = begin;
             it != _shared_state->connection_bodies().end() && (count == 0 || i < count);
             ++i)
           {
