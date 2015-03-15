@@ -421,6 +421,8 @@ namespace boost
             }
           }
         private:
+          invocation_janitor& operator=(const invocation_janitor&);
+
           const slot_call_iterator_cache_type &_cache;
           const signal_type &_sig;
           const connection_list_type *_connection_bodies;
@@ -432,8 +434,8 @@ namespace boost
         {
           BOOST_ASSERT(_shared_state.unique());
           typename connection_list_type::iterator it;
-          unsigned i;
-          for(it = begin, i = 0;
+          unsigned i = 0;
+          for(it = begin;
             it != _shared_state->connection_bodies().end() && (count == 0 || i < count);
             ++i)
           {

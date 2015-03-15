@@ -30,6 +30,11 @@
 #define BOOST_SIGNALS2_GET std::get
 #endif
 
+#ifdef BOOST_MSVC
+# pragma warning(push)
+# pragma warning(disable: 4100) // unreferenced formal parameter
+#endif
+
 namespace boost
 {
   namespace signals2
@@ -136,5 +141,9 @@ namespace boost
     } // namespace detail
   } // namespace signals2
 } // namespace boost
+
+#ifdef BOOST_MSVC
+# pragma warning(pop)
+#endif
 
 #endif // BOOST_SIGNALS2_DETAIL_VARIADIC_SLOT_INVOKER_HPP

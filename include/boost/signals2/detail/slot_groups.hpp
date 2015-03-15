@@ -17,6 +17,11 @@
 #include <map>
 #include <utility>
 
+#ifdef BOOST_MSVC
+# pragma warning(push)
+# pragma warning(disable: 4913) // user defined binary operator ',' exists ...
+#endif
+
 namespace boost {
   namespace signals2 {
     namespace detail {
@@ -231,5 +236,9 @@ namespace boost {
     enum connect_position { at_back, at_front };
   } // end namespace signals2
 } // end namespace boost
+
+#ifdef BOOST_MSVC
+# pragma warning(pop)
+#endif
 
 #endif // BOOST_SIGNALS2_SLOT_GROUPS_HPP
