@@ -133,7 +133,7 @@ test_one_arg()
   boost::signals2::signal<int (int value), max_or_default<int> > s1;
 
   s1.connect(std::negate<int>());
-  s1.connect(std::bind1st(std::multiplies<int>(), 2));
+  s1.connect(std::bind(std::multiplies<int>(), 2, std::placeholders::_1));
 
   BOOST_CHECK(s1(1) == 2);
   BOOST_CHECK(s1(-1) == 1);
@@ -152,8 +152,8 @@ test_signal_signal_connect()
   {
     signal_type s2;
     s1.connect(s2);
-    s2.connect(std::bind1st(std::multiplies<int>(), 2));
-    s2.connect(std::bind1st(std::multiplies<int>(), -3));
+    s2.connect(std::bind(std::multiplies<int>(), 2, std::placeholders::_1));
+    s2.connect(std::bind(std::multiplies<int>(), -3, std::placeholders::_1));
 
     BOOST_CHECK(s2(-3) == 9);
     BOOST_CHECK(s1(3) == 6);
