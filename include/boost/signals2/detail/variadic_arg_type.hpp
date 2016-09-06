@@ -36,11 +36,18 @@ namespace boost
         struct std_functional_base
       {};
       template <typename R, typename T1>
-        struct std_functional_base<R, T1>: public std::unary_function<T1, R>
-      {};
+        struct std_functional_base<R, T1>
+      {
+        typedef T1 argument_type;
+        typedef R result_type;
+      };
       template <typename R, typename T1, typename T2>
-        struct std_functional_base<R, T1, T2>: public std::binary_function<T1, T2, R>
-      {};
+        struct std_functional_base<R, T1, T2>
+      {
+        typedef T1 first_argument_type;
+        typedef T2 second_argument_type;
+        typedef R result_type;
+      };
     } // namespace detail
   } // namespace signals2
 } // namespace boost
