@@ -10,6 +10,12 @@
 
 // For more information, see http://www.boost.org
 
+// the tests trigger deprecation warnings when compiled with msvc in C++17 mode
+#if defined(_MSVC_LANG) && _MSVC_LANG > 201402
+// STL4007: Many result_type typedefs and all argument_type, first_argument_type, and second_argument_type typedefs are deprecated in C++17
+# define _SILENCE_CXX17_ADAPTOR_TYPEDEFS_DEPRECATION_WARNING
+#endif
+
 #include <boost/bind.hpp>
 #include <boost/optional.hpp>
 #include <boost/test/minimal.hpp>
