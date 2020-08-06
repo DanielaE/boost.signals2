@@ -28,10 +28,10 @@
 #include <boost/parameter/required.hpp>
 #include <boost/parameter/optional.hpp>
 #include <boost/parameter/value_type.hpp>
-#include <boost/type_traits/is_function.hpp>
 #include <boost/type_traits/function_traits.hpp>
 #include <boost/signals2/signal.hpp>
 #include <functional>
+#include <type_traits>
 
 namespace boost
 {
@@ -60,7 +60,7 @@ namespace boost
     class signal_type
     {
       typedef parameter::parameters<
-          parameter::required<keywords::tag::signature_type, is_function<boost::mpl::_> >,
+          parameter::required<keywords::tag::signature_type, std::is_function<boost::mpl::_> >,
           parameter::optional<keywords::tag::combiner_type>,
           parameter::optional<keywords::tag::group_type>,
           parameter::optional<keywords::tag::group_compare_type>,
@@ -95,7 +95,7 @@ namespace boost
         group_compare_type;
 
       typedef typename
-        parameter::value_type<args, keywords::tag::slot_function_type, function<signature_type> >::type
+        parameter::value_type<args, keywords::tag::slot_function_type, std::function<signature_type> >::type
         slot_function_type;
 
       typedef typename

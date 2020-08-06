@@ -21,16 +21,9 @@
 #include <boost/config.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
 #include <boost/iterator/iterator_traits.hpp>
-#include <boost/mpl/if.hpp>
 #include <boost/signals2/detail/scope_guard.hpp>
 #include <boost/swap.hpp>
-#include <boost/type_traits/aligned_storage.hpp>
-#include <boost/type_traits/alignment_of.hpp>
-#include <boost/type_traits/has_nothrow_copy.hpp>
-#include <boost/type_traits/has_nothrow_assign.hpp>
-#include <boost/type_traits/has_trivial_assign.hpp>
-#include <boost/type_traits/has_trivial_constructor.hpp>
-#include <boost/type_traits/has_trivial_destructor.hpp>
+#include <type_traits>
 #include <algorithm>
 #include <cstring>
 #include <iterator>
@@ -155,11 +148,10 @@ namespace detail
         typedef const_pointer                            const_iterator;
         typedef boost::reverse_iterator<iterator>        reverse_iterator;
         typedef boost::reverse_iterator<const_iterator>  const_reverse_iterator;
-        typedef typename boost::mpl::if_c< boost::has_trivial_assign<T>::value
-                                           && sizeof(T) <= sizeof(long double),
-                                          const value_type,
-                                          const_reference >::type
-                                                      optimized_const_reference;
+        typedef std::conditional_t< std::is_trivially_copy_assignable<T>::value
+                                    && sizeof(T) <= sizeof(long double),
+                                    const value_type,
+                                    const_reference >    optimized_const_reference;
     private:
 
         pointer allocate( size_type capacity_arg )
@@ -180,18 +172,18 @@ namespace detail
         template< class I >
         static void copy_impl( I begin, I end, pointer where, std::random_access_iterator_tag )
         {
-            copy_rai( begin, end, where, boost::has_trivial_assign<T>() );
+            copy_rai( begin, end, where, std::is_trivially_copy_assignable<T>() );
         }
 
         static void copy_rai( const T* begin, const T* end,
-                              pointer where, const boost::true_type& )
+                              pointer where, const std::true_type& )
         {
             std::memcpy( where, begin, sizeof(T) * std::distance(begin,end) );
         }
 
         template< class I, bool b >
         static void copy_rai( I begin, I end,
-                              pointer where, const boost::integral_constant<bool, b>& )
+                              pointer where, const std::integral_constant<bool, b>& )
         {
             std::uninitialized_copy( begin, end, where );
         }
@@ -212,45 +204,45 @@ namespace detail
         template< class I, class I2 >
         static void assign_impl( I begin, I end, I2 where )
         {
-            assign_impl( begin, end, where, boost::has_trivial_assign<T>() );
+            assign_impl( begin, end, where, std::is_trivially_copy_assignable<T>() );
         }
 
         template< class I, class I2 >
-        static void assign_impl( I begin, I end, I2 where, const boost::true_type& )
+        static void assign_impl( I begin, I end, I2 where, const std::true_type& )
         {
             std::memcpy( where, begin, sizeof(T) * std::distance(begin,end) );
         }
 
         template< class I, class I2 >
-        static void assign_impl( I begin, I end, I2 where, const boost::false_type& )
+        static void assign_impl( I begin, I end, I2 where, const std::false_type& )
         {
             for( ; begin != end; ++begin, ++where )
                 *where = *begin;
         }
 
-        void unchecked_push_back_n( size_type n, const boost::true_type& )
+        void unchecked_push_back_n( size_type n, const std::true_type& )
         {
             std::uninitialized_fill( end(), end() + n, T() );
             size_ += n;
         }
 
-        void unchecked_push_back_n( size_type n, const boost::false_type& )
+        void unchecked_push_back_n( size_type n, const std::false_type& )
         {
             for( size_type i = 0u; i < n; ++i )
                 unchecked_push_back();
         }
 
-        void auto_buffer_destroy( pointer where, const boost::false_type& )
+        void auto_buffer_destroy( pointer where, const std::false_type& )
         {
             (*where).~T();
         }
 
-        void auto_buffer_destroy( pointer, const boost::true_type& )
+        void auto_buffer_destroy( pointer, const std::true_type& )
         { }
 
         void auto_buffer_destroy( pointer where )
         {
-            auto_buffer_destroy( where, boost::has_trivial_destructor<T>() );
+            auto_buffer_destroy( where, std::is_trivially_destructible<T>() );
         }
 
         void auto_buffer_destroy()
@@ -258,10 +250,10 @@ namespace detail
             BOOST_ASSERT( is_valid() );
             if( buffer_ ) // do we need this check? Yes, but only
                 // for N = 0u + local instances in one_sided_swap()
-                auto_buffer_destroy( boost::has_trivial_destructor<T>() );
+                auto_buffer_destroy( std::is_trivially_destructible<T>() );
         }
 
-        void destroy_back_n( size_type n, const boost::false_type& )
+        void destroy_back_n( size_type n, const std::false_type& )
         {
             BOOST_ASSERT( n > 0 );
             pointer buffer  = buffer_ + size_ - 1u;
@@ -270,27 +262,27 @@ namespace detail
                 auto_buffer_destroy( buffer );
         }
 
-        void destroy_back_n( size_type, const boost::true_type& )
+        void destroy_back_n( size_type, const std::true_type& )
         { }
 
         void destroy_back_n( size_type n )
         {
-            destroy_back_n( n, boost::has_trivial_destructor<T>() );
+            destroy_back_n( n, std::is_trivially_destructible<T>() );
         }
 
-        void auto_buffer_destroy( const boost::false_type& x )
+        void auto_buffer_destroy( const std::false_type& x )
         {
             if( size_ )
                 destroy_back_n( size_, x );
             deallocate( buffer_, members_.capacity_ );
         }
 
-        void auto_buffer_destroy( const boost::true_type& )
+        void auto_buffer_destroy( const std::true_type& )
         {
             deallocate( buffer_, members_.capacity_ );
         }
 
-        pointer move_to_new_buffer( size_type new_capacity, const boost::false_type& )
+        pointer move_to_new_buffer( size_type new_capacity, const std::false_type& )
         {
             pointer new_buffer = allocate( new_capacity ); // strong
             scope_guard guard = make_obj_guard( *this,
@@ -302,7 +294,7 @@ namespace detail
             return new_buffer;
         }
 
-        pointer move_to_new_buffer( size_type new_capacity, const boost::true_type& )
+        pointer move_to_new_buffer( size_type new_capacity, const std::true_type& )
         {
             pointer new_buffer = allocate( new_capacity ); // strong
             copy_impl( begin(), end(), new_buffer );       // nothrow
@@ -312,7 +304,7 @@ namespace detail
         void reserve_impl( size_type new_capacity )
         {
             pointer new_buffer = move_to_new_buffer( new_capacity,
-                                                 boost::has_nothrow_copy<T>() );
+                                                 std::is_nothrow_copy_constructible<T>() );
             auto_buffer_destroy();
             buffer_   = new_buffer;
             members_.capacity_ = new_capacity;
@@ -328,7 +320,7 @@ namespace detail
         }
 
         static void swap_helper( auto_buffer& l, auto_buffer& r,
-                                 const boost::true_type& )
+                                 const std::true_type& )
         {
             BOOST_ASSERT( l.is_on_stack() && r.is_on_stack() );
 
@@ -340,7 +332,7 @@ namespace detail
         }
 
         static void swap_helper( auto_buffer& l, auto_buffer& r,
-                                 const boost::false_type& )
+                                 const std::false_type& )
         {
             BOOST_ASSERT( l.is_on_stack() && r.is_on_stack() );
             size_type min_size    = (std::min)(l.size_,r.size_);
@@ -389,36 +381,36 @@ namespace detail
             }
         }
 
-        void grow_back( size_type n, const boost::true_type& )
+        void grow_back( size_type n, const std::true_type& )
         {
             BOOST_ASSERT( size_ + n <= members_.capacity_ );
             size_ += n;
         }
 
-        void grow_back( size_type n, const boost::false_type& )
+        void grow_back( size_type n, const std::false_type& )
         {
             unchecked_push_back_n(n);
         }
 
         void grow_back( size_type n )
         {
-            grow_back( n, boost::has_trivial_constructor<T>() );
+            grow_back( n, std::is_trivially_constructible<T>() );
         }
 
-        void grow_back_one( const boost::true_type& )
+        void grow_back_one( const std::true_type& )
         {
             BOOST_ASSERT( size_ + 1 <= members_.capacity_ );
             size_ += 1;
         }
 
-        void grow_back_one( const boost::false_type& )
+        void grow_back_one( const std::false_type& )
         {
             unchecked_push_back();
         }
 
         void grow_back_one()
         {
-            grow_back_one( boost::has_trivial_constructor<T>() );
+            grow_back_one( std::is_trivially_constructible<T>() );
         }
 
         template< class I >
@@ -762,7 +754,7 @@ namespace detail
         void unchecked_push_back_n( size_type n )
         {
             BOOST_ASSERT( size_ + n <= members_.capacity_ );
-            unchecked_push_back_n( n, boost::has_trivial_assign<T>() );
+            unchecked_push_back_n( n, std::is_trivially_copy_assignable<T>() );
         }
 
         void unchecked_push_back( optimized_const_reference x ) // non-growing
@@ -904,7 +896,7 @@ namespace detail
         void pop_back()
         {
             BOOST_ASSERT( !empty() );
-            auto_buffer_destroy( buffer_ + size_ - 1, boost::has_trivial_destructor<T>() );
+            auto_buffer_destroy( buffer_ + size_ - 1, std::is_trivially_destructible<T>() );
             --size_;
         }
 
@@ -1055,18 +1047,15 @@ namespace detail
             }
 
             BOOST_ASSERT( on_stack && r_on_stack );
-            swap_helper( *this, r, boost::has_trivial_assign<T>() );
+            swap_helper( *this, r, std::is_trivially_copy_assignable<T>() );
             BOOST_ASSERT( is_valid() );
             BOOST_ASSERT( r.is_valid() );
         }
 
     private:
-        typedef boost::aligned_storage< N * sizeof(T),
-                                        boost::alignment_of<T>::value >
-                               storage;
-
-        struct members_type : storage /* to enable EBO */
+        struct members_type
         {
+            std::aligned_storage_t< N * sizeof(T), std::alignment_of_v<T> > storage_;
             size_type capacity_;
 
             members_type( size_type capacity )
@@ -1074,7 +1063,7 @@ namespace detail
             { }
 
             void* address() const
-            { return const_cast<storage&>(static_cast<const storage&>(*this)).address(); }
+            { return const_cast<void *>(reinterpret_cast<const void*>(&storage_)); }
         };
 
         members_type members_;

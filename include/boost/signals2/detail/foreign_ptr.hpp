@@ -1,5 +1,5 @@
 
-//  helper code for dealing with tracking non-boost shared_ptr/weak_ptr
+//  helper code for dealing with tracking non-boost std::shared_ptr/weak_ptr
 
 // Copyright Frank Mori Hess 2009.
 // Distributed under the Boost Software License, Version
@@ -14,13 +14,8 @@
 #include <algorithm>
 #include <boost/config.hpp>
 #include <boost/assert.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/smart_ptr/bad_weak_ptr.hpp>
 #include <boost/utility/swap.hpp>
-
-#ifndef BOOST_NO_CXX11_SMART_PTR
 #include <memory>
-#endif
 
 namespace boost
 {
@@ -31,16 +26,15 @@ namespace boost
   {
     template<typename WeakPtr> struct weak_ptr_traits
     {};
+
     template<typename T> struct weak_ptr_traits<boost::weak_ptr<T> >
     {
       typedef boost::shared_ptr<T> shared_type;
     };
-#ifndef BOOST_NO_CXX11_SMART_PTR
     template<typename T> struct weak_ptr_traits<std::weak_ptr<T> >
     {
       typedef std::shared_ptr<T> shared_type;
     };
-#endif
 
     template<typename SharedPtr> struct shared_ptr_traits
     {};
@@ -49,12 +43,10 @@ namespace boost
     {
       typedef boost::weak_ptr<T> weak_type;
     };
-#ifndef BOOST_NO_CXX11_SMART_PTR
     template<typename T> struct shared_ptr_traits<std::shared_ptr<T> >
     {
       typedef std::weak_ptr<T> weak_type;
     };
-#endif
 
     namespace detail
     {
@@ -170,7 +162,7 @@ namespace boost
           return _p->expired();
         }
       private:
-        boost::scoped_ptr<foreign_weak_ptr_impl_base> _p;
+        std::unique_ptr<foreign_weak_ptr_impl_base> _p;
       };
     } // namespace detail
 

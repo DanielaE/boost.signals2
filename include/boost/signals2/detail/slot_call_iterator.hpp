@@ -13,18 +13,15 @@
 #define BOOST_SIGNALS2_SLOT_CALL_ITERATOR_HPP
 
 #include <boost/assert.hpp>
-#include <boost/aligned_storage.hpp>
 #include <boost/core/no_exceptions_support.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/optional.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <boost/signals2/connection.hpp>
 #include <boost/signals2/slot_base.hpp>
 #include <boost/signals2/detail/auto_buffer.hpp>
 #include <boost/signals2/detail/unique_lock.hpp>
-#include <boost/type_traits/add_const.hpp>
-#include <boost/type_traits/add_reference.hpp>
-#include <boost/weak_ptr.hpp>
+#include <memory>
+#include <type_traits>
 
 namespace boost {
   namespace signals2 {
@@ -78,12 +75,12 @@ namespace boost {
         : public boost::iterator_facade<slot_call_iterator_t<Function, Iterator, ConnectionBody>,
         typename Function::result_type,
         boost::single_pass_traversal_tag,
-        typename boost::add_reference<typename boost::add_const<typename Function::result_type>::type>::type >
+        typename std::add_lvalue_reference<typename std::add_const<typename Function::result_type>::type>::type >
       {
         typedef boost::iterator_facade<slot_call_iterator_t<Function, Iterator, ConnectionBody>,
           typename Function::result_type,
           boost::single_pass_traversal_tag,
-          typename boost::add_reference<typename boost::add_const<typename Function::result_type>::type>::type >
+          typename std::add_lvalue_reference<typename std::add_const<typename Function::result_type>::type>::type >
         inherited;
 
         typedef typename Function::result_type result_type;

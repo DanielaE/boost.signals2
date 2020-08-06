@@ -11,9 +11,8 @@
 #ifndef BOOST_SIGNALS2_SHARED_CONNECTION_BLOCK_HPP
 #define BOOST_SIGNALS2_SHARED_CONNECTION_BLOCK_HPP
 
-#include <boost/shared_ptr.hpp>
 #include <boost/signals2/connection.hpp>
-#include <boost/weak_ptr.hpp>
+#include <memory>
 
 namespace boost
 {
@@ -31,7 +30,7 @@ namespace boost
       void block()
       {
         if(blocking()) return;
-        boost::shared_ptr<detail::connection_body_base> connection_body(_weak_connection_body.lock());
+        std::shared_ptr<detail::connection_body_base> connection_body(_weak_connection_body.lock());
         if(connection_body == 0)
         {
           // Make _blocker non-empty so the blocking() method still returns the correct value
@@ -47,16 +46,16 @@ namespace boost
       }
       bool blocking() const
       {
-        shared_ptr<void> empty;
-        return _blocker < empty || empty < _blocker;
+        std::shared_ptr<void> empty;
+        return _blocker.owner_before(empty) || empty.owner_before(_blocker);
       }
       signals2::connection connection() const
       {
         return signals2::connection(_weak_connection_body);
       }
     private:
-      boost::weak_ptr<detail::connection_body_base> _weak_connection_body;
-      shared_ptr<void> _blocker;
+      std::weak_ptr<detail::connection_body_base> _weak_connection_body;
+      std::shared_ptr<void> _blocker;
     };
   }
 } // end namespace boost
